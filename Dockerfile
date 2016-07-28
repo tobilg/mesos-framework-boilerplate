@@ -21,6 +21,7 @@ WORKDIR ${APP_DIR}
 RUN apk add --no-cache git && \
     rm -rf ${APP_DIR}/node_modules && \
     rm -rf ${APP_DIR}/public/bower_components && \
+    mkdir -p ${APP_DIR}/logs && \
     npm set progress=false && \
     npm install --silent && \
     npm install bower -g && \
