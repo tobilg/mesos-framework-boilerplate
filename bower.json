@@ -1,0 +1,28 @@
+{
+  "name": "mesos-framework-boilerplate",
+  "main": "index.js",
+  "version": "0.1.0",
+  "homepage": "https://github.com/tobilg/mesos-framework-boilerplate",
+  "authors": [
+    "tobilg <tobilg@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "font-awesome": "4.5.0",
+    "bootstrap": "3.3.6",
+    "jquery": "1.11.1",
+    "angular": "1.5.0",
+    "angular-resource": "1.5.0",
+    "angular-route": "1.5.0",
+    "angular-bootstrap": "1.1.2",
+    "json-formatter": "0.4.2",
+    "rdash-ui": "1.0.1"
+  }
+}

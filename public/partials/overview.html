@@ -1,0 +1,71 @@
+<div class="row">
+    <div class="col-md-3">
+        <div class="cell dashboard-stat">
+            <div class="display">
+                <div class="number">
+                    <h3 class="font-red-haze">{{stats.overall.instances}}</h3>
+                    <small>TASKS</small>
+                </div>
+                <div class="icon">
+                    <i class="fa fa-tasks"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="cell dashboard-stat">
+            <div class="display">
+                <div class="number">
+                    <h3 class="font-red-haze">{{stats.overall.cpus}}</h3>
+                    <small>CPUS</small>
+                </div>
+                <div class="icon">
+                    <i class="fa fa-file-text-o"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="cell dashboard-stat">
+            <div class="display">
+                <div class="number">
+                    <h3 class="font-red-haze">{{stats.overall.mem}}MB</h3>
+                    <small>MEMORY</small>
+                </div>
+                <div class="icon">
+                    <i class="fa fa-file-text-o"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="cell dashboard-stat">
+            <div class="display">
+                <div class="number">
+                    <h3 class="font-red-haze">{{stats.overall.disk}}GB</h3>
+                    <small>DISK</small>
+                </div>
+                <div class="icon">
+                    <i class="fa fa-database"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="cell">
+            <h3>Tasks State</h3>
+
+            <div class="progress">
+                <div ng-repeat="state in statesPercentage track by $index">
+                    <div class="progress-bar progress-bar-striped active"
+                         ng-class="state.type && 'progress-bar-' + state.type" style="width: {{state.percentage}}%"
+                         aria-valuenow="{{state.percentage}}" aria-valuemin="0" aria-valuemax="100">
+                        {{state.percentage}}% {{state.state}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

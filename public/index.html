@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html ng-app="mesos-framework-ui">
+<head>
+    <title>Mesos Framework</title>
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bower_components/angular-bootstrap/ui-bootstrap-csp.css">
+    <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="bower_components/rdash-ui/dist/css/rdash.min.css">
+    <link rel="stylesheet" href="bower_components/json-formatter/dist/json-formatter.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:600' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="stylesheets/style.css">
+    <script src="bower_components/jquery/dist/jquery.min.js" type="application/javascript"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js" type="application/javascript"></script>
+    <script src="bower_components/angular/angular.min.js" type="application/javascript"></script>
+    <script src="bower_components/angular-resource/angular-resource.min.js" type="application/javascript"></script>
+    <script src="bower_components/angular-route/angular-route.min.js" type="application/javascript"></script>
+    <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js" type="application/javascript"></script>
+    <script src="bower_components/angular-bootstrap/ui-bootstrap.min.js" type="application/javascript"></script>
+    <script src="bower_components/json-formatter/dist/json-formatter.min.js"></script>
+    <script src="app/app.js" type="application/javascript"></script>
+    <script src="app/config.js" type="application/javascript"></script>
+    <script src="app/controllers.js" type="application/javascript"></script>
+    <script src="app/directives.js" type="application/javascript"></script>
+    <script src="app/services.js" type="application/javascript"></script>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+</head>
+<body>
+<div id="page-wrapper" ng-class="{'open': toggle}" ng-cloak="" ng-controller="MainController">
+    <div id="sidebar-wrapper">
+        <ul class="sidebar">
+            <li class="sidebar-main">
+                <a ng-click="toggleSidebar()">Menu<span class="menu-icon glyphicon glyphicon-transfer"></span></a>
+            </li>
+            <li class="sidebar-list">
+                <a href="#/" ng-class="{active: $route.current.activeTab == 'overview'}">Overview<span class="menu-icon fa fa-tachometer"></span></a>
+            </li>
+            <li class="sidebar-list">
+                <a href="#/scaling" ng-class="{active: $route.current.activeTab == 'scaling'}">Scaling<span class="menu-icon fa fa-rocket"></span></a>
+            </li>
+            <li class="sidebar-list">
+                <a href="#/tasks" ng-class="{active: $route.current.activeTab == 'tasks'}">Tasks<span class="menu-icon fa fa-table"></span></a>
+            </li>
+            <li class="sidebar-list">
+                <a href="#/configuration" ng-class="{active: $route.current.activeTab == 'configuration'}">Configuration<span class="menu-icon fa fa-cog"></span></a>
+            </li>
+            <li class="sidebar-list">
+                <a href="#/logs" ng-class="{active: $route.current.activeTab == 'logs'}">Logs<span class="menu-icon fa fa-folder"></span></a>
+            </li>
+            <li class="sidebar-list" ng-show="webUi.enabled">
+                <a ng-href="{{webUi.url}}" target="_blank">Web UI<span class="menu-icon fa fa-desktop"></span></a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="col-xs-4">
+                <a ng-href="{{info.homepage}}" target="_blank">Github</a>
+            </div>
+            <div class="col-xs-4">
+                <a ng-href="{{info.homepage}}/blob/master/README.md" target="_blank">About</a>
+            </div>
+            <div class="col-xs-4">
+                <a ng-href="{{info.issues}}" target="_blank">Issues</a>
+            </div>
+        </div>
+    </div>
+    <div id="content-wrapper">
+        <div class="page-content">
+            <div class="row header">
+                <div class="col-xs-12">
+                    <div class="pull-right mesos-logo"><img src="images/mesos.jpg"></div>
+                    <h1>{{configuration.frameworkName}}</h1>
+                    <div class="content-wrapper">
+                        <div ng-view></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

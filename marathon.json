@@ -1,0 +1,31 @@
+{
+  "id": "mesos-framework-boilerplate",
+  "container": {
+    "docker": {
+      "image": "tobilg/mesos-framework-boilerplate:latest",
+      "network": "HOST",
+      "forcePullImage": true
+    },
+    "type": "DOCKER"
+  },
+  "cpus": 0.5,
+  "mem": 256,
+  "instances": 1,
+  "healthChecks": [
+    {
+      "path": "/health",
+      "protocol": "HTTP",
+      "gracePeriodSeconds": 30,
+      "intervalSeconds": 10,
+      "timeoutSeconds": 20,
+      "maxConsecutiveFailures": 3,
+      "ignoreHttp1xx": false,
+      "portIndex": 0
+    }
+  ],
+  "ports": [0],
+  "env": {
+    "ZK_URL": "172.17.10.101:2181,172.17.10.102:2181,172.17.10.103:2181",
+    "LOG_LEVEL": "info"
+  }
+}

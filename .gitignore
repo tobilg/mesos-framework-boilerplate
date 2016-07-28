@@ -35,3 +35,9 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+
+# WebStorm files
+.idea/*.xml
+
+# Bower components
+public/bower_components
