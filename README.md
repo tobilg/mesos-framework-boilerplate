@@ -12,7 +12,7 @@ The intention of this project is to lower the barrier for Mesos beginners to wri
 
 You can use and customize this project by doing a 
 
-```
+```bash
 git clone https://github.com/tobilg/mesos-framework-boilerplate.git
 ```
 
@@ -53,7 +53,7 @@ The `ContainerInfo` object is the representation of the [Mesos.ContainerInfo](ht
 
 You can configure the settings for your Docker image, like the image name and the networking.
 
-```
+```javascript
 // The container information object to be used
 var ContainerInfo = new Mesos.ContainerInfo(
     Mesos.ContainerInfo.Type.DOCKER, // Type
@@ -79,7 +79,7 @@ You can define the `priority` in which the task types should be started (lower n
 
 The `Mesos.Environment` protobuf can be used to define environment variables that should be used when starting the Docker image.
 
-```
+```javascript
 // The framework tasks
 var frameworkTasks = {
     "jobmanagers": {
@@ -151,7 +151,7 @@ As `mesos-framework` is a wrapper around the Master's HTTP APIs, a `masterUrl` n
 
 You should definitely customize the `frameworkName` though!
 
-```
+```javascript
 // The framework's overall configuration
 var frameworkConfiguration = {
     "masterUrl": process.env.MASTER_IP || "leader.mesos",
@@ -170,7 +170,7 @@ var frameworkConfiguration = {
 
 The Dockerfile uses a minimal Alpine Linux/Node.js 6.3 base image.  
 
-```
+```bash
 FROM mhart/alpine-node:6.3.0
 
 MAINTAINER tobilg@gmail.com
@@ -232,7 +232,7 @@ Once your Docker image has been built and pushed to a registry, you can use it t
 
 ### Basic application definition
 
-```
+```javascript
 {
   "id": "YOUR_FRAMEWORK_NAME",
   "container": {
