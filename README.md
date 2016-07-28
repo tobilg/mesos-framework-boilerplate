@@ -279,4 +279,26 @@ Once you prepared your `marathon.json`, you can launch it from the command-line 
 curl -H "Accept: application/json" -H "Content-Type:application/json" -XPUT "MARATHON_URL" -d @marathon.json
 ```
 
-You should receive a `201` status, and see the application in the Marathon UI accordingly.
+You should receive a `201` status, and see the application in the Marathon UI accordingly (Go to the "Frameworks" tab, and search for the framework's name under "Active Frameworks"). Click on the link (in the "Host" column), this should lead you to the frameworks UI in a new browser tab.
+
+## UI screenshots
+
+### Dashboard
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Scaling
+
+![Scaling](docs/screenshots/scaling.png)
+
+### Tasks
+
+![Tasks](docs/screenshots/tasks.png)
+
+### Configuration
+
+![Configuration](docs/screenshots/configuration.png)
+
+### Logs
+
+![Logs](docs/screenshots/logs.png)
