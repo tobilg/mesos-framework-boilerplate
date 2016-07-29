@@ -37,7 +37,10 @@ jspm_packages
 .node_repl_history
 
 # WebStorm files
+.idea/
 .idea/*.xml
 
 # Bower components
 public/bower_components
+
+.DS_Store
