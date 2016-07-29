@@ -6,7 +6,7 @@ A boilerplate for developing Mesos frameworks with JavaScript, based on [mesos-f
 
 The intention of this project is to lower the barrier for Mesos beginners to write a custom framework. That's also the reason why JavaScript was chosen as an implementation language.
 
-[mesos-framework](https://github.com/tobilg/mesos-framework) doen't currently support HA schedulers, but this will probably arrive in the close future. This means that only single instances of the newly created schedulers can be run.
+[mesos-framework](https://github.com/tobilg/mesos-framework) doesn't currently support HA schedulers, but this will probably arrive in the close future. This means that only single instances of the newly created schedulers can be run.
 
 ## Usage
 
@@ -43,7 +43,7 @@ GET /health                               Returns http status 200 as long the ap
 
 ## Scheduler customization
 
-The [mesos-framework](https://github.com/tobilg/mesos-framework) documentation applies for all the possible usages of scheduler (and possible executors). Also, have a look at the [examples](https://github.com/tobilg/mesos-framework/tree/master/examples)!
+The [mesos-framework](https://github.com/tobilg/mesos-framework) documentation applies for all the possible usages of the Scheduler (and possible Executor) classes. Also, have a look at the [examples](https://github.com/tobilg/mesos-framework/tree/master/examples)!
 
 The following sub-chapters are a walk-through of the scheduler configuration for this project.
 
@@ -77,7 +77,7 @@ The `frameworkTasks` object is a map object, which contains the different kinds 
 
 You can define the `priority` in which the task types should be started (lower number is a higher priority). Also, the `instances` property define how many instances of this task shall be started.
 
-The `Mesos.Environment` protobuf can be used to define environment variables that should be used when starting the Docker image.
+The [Mesos.Environment](https://github.com/apache/mesos/blob/c6e9ce16850f69fda719d4e32be3f2a2e1d80387/include/mesos/v1/mesos.proto#L1434) protobuf can be used to define environment variables that should be used when starting the Docker image.
 
 ```javascript
 // The framework tasks
@@ -147,7 +147,7 @@ var frameworkTasks = {
 
 The `frameworkConfiguration` object defined the basic properties and abilities of the framework. Please specifically have a look at the [scheduler docs](https://github.com/tobilg/mesos-framework/blob/master/README.md#scheduler) to get a complete overview of all usable properties.
  
-As `mesos-framework` is a wrapper around the Master's HTTP APIs, a `masterUrl` needs to be specified. If you use Mesos DNS in your cluster, you don't need to set anything here, because `leader.mesos` will be automatically used to discover the leading Mesos Master.
+As [mesos-framework](https://github.com/tobilg/mesos-framework) is a wrapper around the Master's Scheduler and Executor HTTP APIs, a `masterUrl` needs to be specified. If you use Mesos DNS in your cluster, you don't need to set anything here, because `leader.mesos` will be automatically used to discover the leading Mesos Master.
 
 You should definitely customize the `frameworkName` though!
 
@@ -194,6 +194,7 @@ WORKDIR ${APP_DIR}
 RUN apk add --no-cache git && \
     rm -rf ${APP_DIR}/node_modules && \
     rm -rf ${APP_DIR}/public/bower_components && \
+    mkdir -p ${APP_DIR}/logs && \
     npm set progress=false && \
     npm install --silent && \
     npm install bower -g && \
