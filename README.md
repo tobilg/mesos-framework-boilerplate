@@ -16,6 +16,23 @@ You can use and customize this project by doing a
 git clone https://github.com/tobilg/mesos-framework-boilerplate.git
 ```
 
+### Tools
+You'll also need the following tools installed on you machine to be able to develop you own Mesos framework with this boilerplate:
+
+* Node.js >= 4
+* NPM >= 2
+* Bower
+
+### Installation of dependencies
+
+You'll need to do a 
+
+```bash
+npm install && bower install
+```
+
+on the command-line in the project's root directory to install the frontend and backend dependencies.
+
 See the chapter [customization](#scheduler-customization) for further info on how to create your own framework scheduler.
 
 ## UI
