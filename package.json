@@ -1,6 +1,6 @@
 {
   "name": "mesos-framework-boilerplate",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A boilerplate for developing Mesos frameworks with JavaScript",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,10 @@
     "dashboard"
   ],
   "author": "tobilg@gmail.com",
-  "license": "MIT",
+  "license": {
+    "type": "Apache-2.0",
+    "url": "http://www.apache.org/licenses/LICENSE-2.0"
+  },
   "bugs": {
     "url": "https://github.com/tobilg/mesos-framework-boilerplate/issues"
   },
