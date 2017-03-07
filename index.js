@@ -1,128 +1,126 @@
+/*jslint
+this: true,
+es6: true,
+node: true
+for
+*/
+"use strict";
 // Internal modules
-var path = require("path");
+const fs = require("fs");
 
 // NPM modules
 var express = require("express");
 
 // Project modules
 var config = require("./lib/config");
+var RestartHelper = require("./lib/restartHelper");
+var baseApi = require("./lib/baseApi");
+var initAuth = require("./lib/auth");
+var ejs = require("./routes/ejs");
+var populateTasks = require("./lib/populateTasks").populateTasks;
+
+// Modules loaded array
+var moduleSetups = [];
 
 // Check if we got the necessary info from the environment, otherwise fail directly!
-require("require-environment-variables")(["HOST", "PORT0", "ZK_URL"]);
+require("require-environment-variables")([
+    // Scheduler settings
+    "HOST",
+    "PORT0",
+    "MESOS_SANDBOX",
+    "FRAMEWORK_NAME",
+    "TASK_DEF_NUM",
+    // Task settings
+    "TASK0_NAME",
+    "TASK0_NUM_INSTANCES",
+    "TASK0_CPUS",
+    "TASK0_MEM",
+    "TASK0_IMAGE"
+/*  Optional variables for tasks
+    "TASK0_HEALTHCHECK",
+    "TASK0_HEALTHCHECK_PORT",
+    "TASK0_URI",
+    "TASK0_ARGS",
+    "TASK0_CONTAINER_PARAMS",
+    "AUTH_COOKIE_ENCRYPTION_KEY",
+    "TASK0_CONTAINER_PRIVILEGED",
+    "TASK0_FIXED_PORTS",
+    "TASK0_ENV"  */
+]);
 
 // Create the Express object
 var app = express();
+app.set('view engine', 'ejs');
 
 // Set application properties
 app.set("port", process.env.PORT0 || config.application.port);
 app.set("host", process.env.HOST || config.application.host);
 app.set("env", process.env.NODE_ENV || config.application.environment);
 app.set("logLevel", process.env.LOG_LEVEL || config.application.logLevel);
-app.set("zkUrl", process.env.ZK_URL);
+
+// Initialize optional user authorization
+initAuth(app);
 
 // Define static files path
 app.use(express.static("public"));
+app.use("/bower_components", express.static("bower_components"));
+
+var Scheduler;
 
 // Instantiate the mesos-framework module related objects
-var Scheduler = require("mesos-framework").Scheduler;
-var Mesos = require("mesos-framework").Mesos.getMesos();
-
-// The container information object to be used
-var ContainerInfo = new Mesos.ContainerInfo(
-    Mesos.ContainerInfo.Type.DOCKER, // Type
-    null, // Volumes
-    null, // Hostname
-    new Mesos.ContainerInfo.DockerInfo(
-        "mesoshq/flink:0.1.1", // Image
-        Mesos.ContainerInfo.DockerInfo.Network.HOST, // Network
-        null,  // PortMappings
-        false, // Privileged
-        null,  // Parameters
-        true, // forcePullImage
-        null   // Volume Driver
-    )
-);
-
-// The framework tasks
-var frameworkTasks = {
-    "jobmanagers": {
-        "priority": 1,
-        "instances": 3,
-        "executorInfo": null, // Can take a Mesos.ExecutorInfo object
-        "containerInfo": ContainerInfo, // Mesos.ContainerInfo object
-        "commandInfo": new Mesos.CommandInfo( // Strangely, this is needed, even when specifying ContainerInfo...
-            null, // URI
-            new Mesos.Environment([
-                new Mesos.Environment.Variable("flink_recovery_mode", "zookeeper"),
-                new Mesos.Environment.Variable("flink_recovery_zookeeper_quorum", app.get("zkUrl")),
-                new Mesos.Environment.Variable("flink_recovery_zookeeper_storageDir", "/data/zk")
-            ]), // Environment
-            false, // Is shell?
-            null, // Command
-            ["jobmanager"], // Arguments
-            null // User
-        ),
-        "resources": {
-            "cpus": 0.5,
-            "mem": 256,
-            "ports": 2,
-            "disk": 0
-        },
-        "healthChecks": null, // Add your health checks here
-        "labels": null // Add your labels (an array of { "key": "value" } objects)
-    },
-    "taskmanagers": {
-        "priority": 2,
-        "instances": 2,
-        "allowScaling": true,
-        "executorInfo": null, // Can take a Mesos.ExecutorInfo object
-        "containerInfo": ContainerInfo, // Mesos.ContainerInfo object
-        "commandInfo": new Mesos.CommandInfo( // Strangely, this is needed, even when specifying ContainerInfo...
-            null, // URI
-            new Mesos.Environment([
-                new Mesos.Environment.Variable("flink_recovery_mode", "zookeeper"),
-                new Mesos.Environment.Variable("flink_recovery_zookeeper_quorum", app.get("zkUrl")),
-                new Mesos.Environment.Variable("flink_recovery_zookeeper_storageDir", "/data/zk"),
-                new Mesos.Environment.Variable("flink_taskmanager_tmp_dirs", "/data/tasks"),
-                new Mesos.Environment.Variable("flink_blob_storage_directory", "/data/blobs"),
-                new Mesos.Environment.Variable("flink_state_backend", "filesystem"),
-                new Mesos.Environment.Variable("flink_taskmanager_numberOfTaskSlots", "1"),
-                new Mesos.Environment.Variable("flink_taskmanager_heap_mb", "1536")
-            ]), // Environment
-            false, // Is shell?
-            null, // Command
-            ["taskmanager"], // Arguments
-            null // User
-        ),
-        "resources": {
-            "cpus": 0.5,
-            "mem": 1536,
-            "ports": 3,
-            "disk": 0
-        },
-        "healthChecks": null, // Add your health checks here
-        "labels": null // Add your labels (an array of { "key": "value" } objects)
-    }
-};
+if (fs.existsSync("./mesos-framework")) {
+    Scheduler = require("./mesos-framework").Scheduler;
+} else {
+    Scheduler = require("mesos-framework").Scheduler;
+}
 
 // The framework's overall configuration
 var frameworkConfiguration = {
     "masterUrl": process.env.MASTER_IP || "leader.mesos",
     "port": 5050,
-    "frameworkName": "Mesos-Framework-Boilerplate",
+    "frameworkName": process.env.FRAMEWORK_NAME,
     "logging": {
-        "path": path.join(__dirname , "/logs"),
-        "fileName": "mesos-framework-boilerplate.log",
+        "path": process.env.MESOS_SANDBOX + "/logs/",
+        "fileName": process.env.FRAMEWORK_NAME + ".log",
         "level": app.get("logLevel")
     },
-    "tasks": frameworkTasks
+    "killUnknownTasks": true,
+    "useZk": true,
+    "staticPorts": true,
+    "serialNumberedTasks": false,
+    "userAuthSupport": !!process.env.AUTH_COOKIE_ENCRYPTION_KEY,
+    "tasks": populateTasks(),
+    "restartStates": ["TASK_FAILED", "TASK_LOST", "TASK_ERROR", "TASK_FINISHED", "TASK_KILLED"],
+    "moduleList": []
 };
 
+function requireModules() {
+    // Importing pluggable modules
+    var moduleFiles = fs.readdirSync("./");
+    if (moduleFiles) {
+        var index;
+        var currentModule;
+        for (index = 0; index < moduleFiles.length; index += 1) {
+            currentModule = moduleFiles[index];
+            if (currentModule.match(/-module$/) && fs.existsSync("./" + currentModule + "/index.js")) {
+                moduleSetups.push(require("./" + currentModule));
+            }
+        }
+    }
+}
+
+fs.mkdirSync(process.env.MESOS_SANDBOX + "/logs");
+
+requireModules();
+
 var scheduler = new Scheduler(frameworkConfiguration);
+var restartHelper;
 
 // Start framework scheduler
-scheduler.subscribe();
-scheduler.logger.info("Subscribed to Mesos Master!");
+scheduler.on("ready", function () {
+    scheduler.logger.info("Ready");
+    scheduler.subscribe();
+});
 
 // Capture "error" events
 scheduler.on("error", function (error) {
@@ -131,20 +129,37 @@ scheduler.on("error", function (error) {
 });
 
 // Wait for the framework scheduler to be subscribed to the leading Mesos Master
-scheduler.on("subscribed", function (obj) {
+scheduler.once("subscribed", function (obj) {
+    restartHelper = new RestartHelper(scheduler, {"timeout": 300000});
     // Instantiate API (pass the scheduler and framework configuration)
-    var api = require("./routes/api")(scheduler, frameworkConfiguration);
+    var api = require("./routes/api")(scheduler, frameworkConfiguration, restartHelper);
+
+    // Setup extended modules
+    if (moduleSetups) {
+        var index;
+        for (index = 0; index < moduleSetups.length; index += 1) {
+            moduleSetups[index](scheduler, frameworkConfiguration, api, app, restartHelper);
+        }
+    }
+    require("./routes/configApi")(api);
     // Create routes
     app.use("/api/" + config.application.apiVersion, api);
+
+    // Middleware for health check API
+    app.use(function (req, res, next) {
+        req.scheduler = scheduler;
+        req.frameworkConfiguration = frameworkConfiguration;
+        next();
+    });
+    // /health endpoint for Marathon health checks
+    app.get("/health", baseApi.healthCheck);
+    ejs.setup(app);
+    app.get("/moduleList", baseApi.moduleList);
 });
 
-
-// /health endpoint for Marathon health checks
-app.get("/health", function(req, res) {
-    res.send("OK");
-});
-
-var server = app.listen(app.get("port"), app.get("host"), function() {
+// Setting up the express server
+var server;
+server = app.listen(app.get("port"), app.get("host"), function () {
     scheduler.logger.info("Express server listening on port " + server.address().port + " on " + server.address().address);
 });
 

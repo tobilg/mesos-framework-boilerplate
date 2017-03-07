@@ -1,32 +1,51 @@
+"use strict";
 var controllers = angular.module('mesos-framework-ui.controllers', []);
 
-controllers.controller('MainController', function($scope, $interval, $route, config, FrameworkStats, FrameworkInformation, FrameworkConfiguration, Tasks) {
+controllers.controller('MainController', function($scope, $interval, $route, $window, config, FrameworkStats, FrameworkInformation, FrameworkConfiguration, Tasks, RollingRestart, Restart, FrameworkRestart, KillAll, KillAllType, ModuleInfo) {
     $scope.$route = $route;
 
     /** Responsiveness helpers **/
     var mobileView = 992;
-    $scope.getWidth = function() {
+    $scope.getWidth = function () {
         return window.innerWidth;
     };
-    $scope.$watch($scope.getWidth, function(newValue, oldValue) {
+    $scope.$watch($scope.getWidth, function (newValue, oldValue) {
         if (newValue >= mobileView) {
             $scope.toggle = true;
         } else {
             $scope.toggle = false;
         }
     });
-    $scope.toggleSidebar = function() {
+    $scope.toggleSidebar = function () {
         $scope.toggle = !$scope.toggle;
     };
-    window.onresize = function() {
+    window.onresize = function () {
         $scope.$apply();
     };
 
+    $scope.orderType = "taskId";
+    $scope.orderReverse = false;
+    $scope.moduleInfo = ModuleInfo.moduleInfo;
+
+    $scope.setModuleInfo = function (moduleInfo) {
+        Object.getOwnPropertyNames(moduleInfo).forEach(function (name) {
+            $scope.moduleInfo[name] = moduleInfo[name];
+        });
+    };
+
     /** Framework configuration **/
-    var fetchFrameworkConfiguration = function() {
+    var fetchFrameworkConfiguration = function () {
         FrameworkConfiguration.get(function (configuration) {
             $scope.name = configuration.frameworkName;
+            if (configuration.user === "") {
+                $window.location.href = "./login";
+            }
             $scope.configuration = configuration.toJSON();
+            if ($scope.moduleInfo && $scope.moduleInfo.configure && $scope.moduleInfo.configure.length) {
+                $scope.moduleInfo.configure.forEach(function (configFunction) {
+                    configFunction();
+                });
+            }
         });
     };
 
@@ -141,6 +160,105 @@ controllers.controller('MainController', function($scope, $interval, $route, con
             }
 
         });
+    };
+
+    $scope.frameworkRestart = function() {
+        var confirmation = prompt("Are you sure you want to restart the framework?\nThis may cause service downtime, please write yes in the box and click OK if you are sure.");
+        console.log("Confirmation: " + confirmation);
+        FrameworkRestart.save({
+            sure: confirmation
+        }, {});
+    };
+
+    $scope.restart = function(taskId) {
+        if ($scope.moduleInfo && $scope.moduleInfo.restartHooks && $scope.moduleInfo.restartHooks.length > 0) {
+            var index;
+            for (index = 0; index < $scope.moduleInfo.restartHooks.length; index += 1) {
+                if (!$scope.moduleInfo.restartHooks[index](taskId)) {
+                    return;
+                }
+            }
+        }
+        console.log("Restarting task id: " + taskId);
+        Restart.save({
+            task: taskId
+        }, {});
+    };
+
+    $scope.rollingRestart = function() {
+        if ($scope.moduleInfo && $scope.moduleInfo.rollingRestartHooks && $scope.moduleInfo.rollingRestartHooks.length > 0) {
+            var index;
+            for (index = 0; index < $scope.moduleInfo.rollingRestartHooks.length; index += 1) {
+                if (!$scope.moduleInfo.rollingRestartHooks[index]()) {
+                    return;
+                }
+            }
+        }
+        var confirmation = prompt("Are you sure you want to restart all tasks?\nThis may cause service downtime, please write yes in the box and click OK if you are sure.");
+        console.log("Confirmation: " + confirmation);
+        RollingRestart.save({
+            sure: confirmation
+        }, {});
+    };
+
+    $scope.killAll = function () {
+        var index;
+        var confirmation;
+        if ($scope.moduleInfo && $scope.moduleInfo.killAllHooks && $scope.moduleInfo.killAllHooks.length > 0) {
+            for (index = 0; index < $scope.moduleInfo.killAllHooks.length; index += 1) {
+                confirmation = $scope.moduleInfo.killAllHooks[index]();
+                if (!confirmation) {
+                    return;
+                }
+            }
+        }
+        var message = "Are you sure you want to kill all tasks? \nThis WILL cause service downtime and possibly data loss, please write yes in the box and click OK if you are sure.";
+        if (confirmation === undefined) {
+            confirmation = prompt(message);
+        }
+        console.log("Confirmation: " + confirmation);
+        KillAll.save({
+            sure: confirmation
+        }, {});
+    };
+
+    $scope.killAllType = function (type) {
+        var index;
+        var confirmation;
+        if ($scope.moduleInfo && $scope.moduleInfo.killAllTypeHooks && $scope.moduleInfo.killAllTypeHooks.length > 0) {
+            for (index = 0; index < $scope.moduleInfo.killAllTypeHooks.length; index += 1) {
+                confirmation = $scope.moduleInfo.killAllTypeHooks[index](type);
+                if (!confirmation) {
+                    return;
+                }
+            }
+        }
+        var message = "Are you sure you want to kill all " + type + " tasks? \nThis WILL cause service downtime and possibly data loss, please write yes in the box and click OK if you are sure.";
+        if (confirmation === undefined) {
+            confirmation = prompt(message);
+        }
+        console.log("Confirmation: " + confirmation);
+        KillAllType.save({
+            sure: confirmation,
+            type: type
+        }, {});
+    };
+
+    $scope.getTaskUptime = function (uptime) {
+        if (uptime) {
+            var diff = parseInt((Date.now() - uptime) / 1000);
+            var days = parseInt(diff / 60 / 60 / 24);
+            diff -= days * 24 * 60 * 60;
+            var hours = parseInt(diff / 60 / 60);
+            diff -= hours * 60 * 60;
+            var mins = parseInt(diff / 60);
+            diff -= mins * 60;
+            var seconds = diff;
+            var uptimeString = days.toString() + ":" + hours.toString() + ":" + (mins < 10 ? "0" : "") + mins.toString() + "." + (seconds < 10 ? "0" : "") + seconds.toString();
+            return uptimeString;
+        } else {
+            return "unknown";
+        }
     };
 
     fetchTasks();

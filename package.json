@@ -32,9 +32,35 @@
   },
   "homepage": "https://github.com/tobilg/mesos-framework-boilerplate",
   "dependencies": {
+    "async": "^2.1.4",
+    "body-parser": "^1.16.1",
+    "cookie-parser": "^1.4.3",
+    "cookie-session": "^2.0.0-alpha.2",
+    "ejs": "^2.5.6",
     "express": "^4.14.0",
     "lodash": "^4.14.0",
-    "mesos-framework": "^0.2.8",
-    "require-environment-variables": "^1.1.2"
+    "mesos-framework": "^0.5.3",
+    "node-zookeeper-client": "^0.2.2",
+    "passport": "^0.3.2",
+    "passport-gitlab2": "^2.2.0",
+    "passport-google-oauth20": "^1.0.0",
+    "protobufjs": "^5.0.1",
+    "request": "^2.79.0",
+    "require-environment-variables": "^1.1.2",
+    "uuid": "^2.0.2",
+    "winston": "^2.2.0",
+    "winston-daily-rotate-file": "^1.1.5"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "jsdoc": "^3.4.0",
+    "minami": "^1.1.1",
+    "mocha": "^3.2.0",
+    "mock-req": "^0.2.0",
+    "mock-res": "^0.3.3",
+    "sinon": "^1.17.6",
+    "istanbul": "0.4.5",
+    "rewire": "^2.5.2",
+    "should": "^11.2.0"
   }
 }

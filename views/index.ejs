@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html ng-app="mesos-framework-ui">
+<html ng-app="mesos-framework-ui" ng-controller="MainController">
 <head>
-    <title>Mesos Framework</title>
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="bower_components/angular-bootstrap/ui-bootstrap-csp.css">
     <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
@@ -9,6 +8,7 @@
     <link rel="stylesheet" href="bower_components/json-formatter/dist/json-formatter.min.css">
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:600' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="stylesheets/style.css">
+    <link rel="stylesheet" href="stylesheets/dynamic-style.css">
     <script src="bower_components/jquery/dist/jquery.min.js" type="application/javascript"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.min.js" type="application/javascript"></script>
     <script src="bower_components/angular/angular.min.js" type="application/javascript"></script>
@@ -22,10 +22,14 @@
     <script src="app/controllers.js" type="application/javascript"></script>
     <script src="app/directives.js" type="application/javascript"></script>
     <script src="app/services.js" type="application/javascript"></script>
+    <% moduleFiles.forEach (function (moduleFile) { -%>
+    <script src="<%= moduleFile %>" type="application/javascript"></script>
+    <% }); -%>
+    <title>{{configuration.frameworkName}} web UI</title>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
-<div id="page-wrapper" ng-class="{'open': toggle}" ng-cloak="" ng-controller="MainController">
+<div id="page-wrapper" ng-class="{'open': toggle}" ng-cloak="">
     <div id="sidebar-wrapper">
         <ul class="sidebar">
             <li class="sidebar-main">
@@ -40,11 +44,17 @@
             <li class="sidebar-list">
                 <a href="#/tasks" ng-class="{active: $route.current.activeTab == 'tasks'}">Tasks<span class="menu-icon fa fa-table"></span></a>
             </li>
+            <% moduleMenus.forEach(function (moduleMenuString) { -%>
+            <%- moduleMenuString %>
+            <% }); -%>
             <li class="sidebar-list">
                 <a href="#/configuration" ng-class="{active: $route.current.activeTab == 'configuration'}">Configuration<span class="menu-icon fa fa-cog"></span></a>
             </li>
             <li class="sidebar-list">
                 <a href="#/logs" ng-class="{active: $route.current.activeTab == 'logs'}">Logs<span class="menu-icon fa fa-folder"></span></a>
+            </li>
+            <li class="sidebar-list" ng-show="configuration.userAuthSupport">
+                <a href="./logout">Logout<span class="menu-icon fa fa-sign-out"></span></a>
             </li>
             <li class="sidebar-list" ng-show="webUi.enabled">
                 <a ng-href="{{webUi.url}}" target="_blank">Web UI<span class="menu-icon fa fa-desktop"></span></a>
@@ -64,9 +74,9 @@
     </div>
     <div id="content-wrapper">
         <div class="page-content">
-            <div class="row header">
+            <div class="row header" id="framework-name">
                 <div class="col-xs-12">
-                    <div class="pull-right mesos-logo"><img src="images/mesos.jpg"></div>
+                    <div class="pull-right mesos-logo"><img src="images/mesos_transparent.png"></div>
                     <h1>{{configuration.frameworkName}}</h1>
                     <div class="content-wrapper">
                         <div ng-view></div>

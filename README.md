@@ -1,12 +1,14 @@
 # mesos-framework-boilerplate
 
-A boilerplate for developing Mesos frameworks with JavaScript, based on [mesos-framework](https://github.com/tobilg/mesos-framework). It includes a framework scheduler example, completed by an UI. 
+A boilerplate for developing Mesos frameworks with JavaScript, based on [mesos-framework](https://github.com/tobilg/mesos-framework). It includes a framework scheduler example, completed by an UI and support for a highly configureable framework use that does not need any added code. 
 
 ## Intro
 
 The intention of this project is to lower the barrier for Mesos beginners to write a custom framework. That's also the reason why JavaScript was chosen as an implementation language.
 
-[mesos-framework](https://github.com/tobilg/mesos-framework) doesn't currently support HA schedulers, but this will probably arrive in the close future. This means that only single instances of the newly created schedulers can be run.
+[mesos-framework](https://github.com/tobilg/mesos-framework) doesn't currently support HA schedulers, but this will probably arrive in the close future. This means that only single instances of the newly created schedulers can be run, however, it does persist information in Zookeeper across scheduler restarts.  
+
+It supports authentication (via GitLab or Google), restarts, pluggable modules (just write them and put them in a directory named "module-*"), health checks, multiple tasks, colocation prevention support, health check and leader indications (need module code).
 
 ## Usage
 
@@ -15,6 +17,8 @@ You can use and customize this project by doing a
 ```bash
 git clone https://github.com/tobilg/mesos-framework-boilerplate.git
 ```
+
+In addition, you can customize the marathon task environment variables to run whatever you like as a framework.
 
 ### Tools
 You'll also need the following tools installed on you machine to be able to develop you own Mesos framework with this boilerplate:
@@ -39,23 +43,28 @@ See the chapter [customization](#scheduler-customization) for further info on ho
 
 The UI was initially taken from the excellent [mesos/elasticsearch](https://github.com/mesos/elasticsearch) framework, which uses [rdash-angular](https://github.com/rdash/rdash-angular) itself. It then was adapted to use the Node.js backend webservices, which the frontend consumes via Angular services.
 
-If you want to change the UI styling, you can edit the `public/stylesheets/style.css` file according to your needs.
+If you want to change the UI styling, you can edit the `public/stylesheets/style.css` file according to your needs, in addition, the FRAMEWORK_NAME_BACKGROUND environment variable is available to set the framework title row color.
 
 ## Backend
 
-The backend was developed in Node.js, and is quite straight forward. Nothing fancy, just some plain [Express.js](http://www.expressjs.com) services which can be found in `routes/api.js`.
+The backend was developed in Node.js, and is quite straight forward. Nothing fancy, just some plain [Express.js](http://www.expressjs.com) services which can be found in `routes/api.js` and `lib/baseApi.js`.
 
 It provides the following endpoints:
 
 ```
-GET /framework/configuration              Returns the started framework configuration as JSON.
+GET /framework/configuration              Returns the started framework configuration as JSON, authentication-aware.
 GET /framework/info                       Returns the information about the framework from the `package.json` file.
 GET /framework/stats                      Returns the stats for each task type, for usage in the Dashboard.
+GET /framework/restart                    Restarts the scheduler.
 GET /tasks/launched                       Returns the launched (running) tasks.
 GET /tasks/types                          Returns the task types, along with some basic stats (with `runningInstances` and `allowScaling`).
 PUT /tasks/types/:type/scale/:instances   Used to scale the task types (`type`) to (`instances`) instances.
+POST /tasks/:task/restart                 Used to restart a task, by task ID, a module can add a health check and set the restart helper to use it as a check of a completed restart.
+POST /tasks/rollingRestart                Used for rolling restart of all running tasks, a module can add a health check and set the restart helper to use it as a check of a completed restart.
+POST /tasks/killAll                       Used to kill all tasks under the framework and start them again, not as a rolling restart.
+POST /tasks/types/:type/killAll           Used to kill all tasks of a type under the framework and start them again, not as a rolling restart.
 GET /logs                                 Returns the current log output as text.
-GET /health                               Returns http status 200 as long the application is running. Used for Marathon health checks.
+GET /health                               Returns http status 200 as long the application is running and a heartbeat from Mesos has been sent in the last 60 seconds. Used for Marathon health checks.
 ```
 
 ## Scheduler customization
@@ -166,7 +175,7 @@ The `frameworkConfiguration` object defined the basic properties and abilities o
  
 As [mesos-framework](https://github.com/tobilg/mesos-framework) is a wrapper around the Master's Scheduler and Executor HTTP APIs, a `masterUrl` needs to be specified. If you use Mesos DNS in your cluster, you don't need to set anything here, because `leader.mesos` will be automatically used to discover the leading Mesos Master.
 
-You should definitely customize the `frameworkName` though!
+You should definitely customize the `frameworkName` though, keep in mind that the framework name is the identifier used for ZK persistency!
 
 ```javascript
 // The framework's overall configuration
@@ -192,6 +201,12 @@ FROM mhart/alpine-node:6.3.0
 
 MAINTAINER tobilg@gmail.com
 
+# Setup of the prerequisites
+RUN apk add --no-cache git && \
+    apk add --no-cache ca-certificates openssl && \
+    mkdir -p /mnt/mesos/sandbox/logs && \
+    npm set progress=false
+
 # Set application name
 ENV APP_NAME mesos-framework-boilerplate
 
@@ -208,16 +223,11 @@ ADD . ${APP_DIR}
 WORKDIR ${APP_DIR}
 
 # Setup of the application
-RUN apk add --no-cache git && \
-    rm -rf ${APP_DIR}/node_modules && \
-    rm -rf ${APP_DIR}/public/bower_components && \
-    mkdir -p ${APP_DIR}/logs && \
-    npm set progress=false && \
-    npm install --silent && \
+RUN npm install --silent && \
     npm install bower -g && \
     bower install --allow-root
 
-CMD ["npm", "start"]
+CMD ["sh", "./get_creds.sh"]
 ```
 
 ### Customization
@@ -252,10 +262,10 @@ Once your Docker image has been built and pushed to a registry, you can use it t
 
 ```javascript
 {
-  "id": "YOUR_FRAMEWORK_NAME",
+  "id": "mesos-framework-boilerplate",
   "container": {
     "docker": {
-      "image": "REGISTRY_URL/USERNAME/IMAGENAME:TAG",
+      "image": "tobilg/mesos-framework-boilerplate:latest",
       "network": "HOST",
       "forcePullImage": true
     },
@@ -276,18 +286,47 @@ Once your Docker image has been built and pushed to a registry, you can use it t
       "portIndex": 0
     }
   ],
+  "labels": {
+    "DCOS_SERVICE_SCHEME": "http",
+    "DCOS_SERVICE_NAME": "<FRAMEWORK_NAME>",
+    "DCOS_PACKAGE_FRAMEWORK_NAME": "<FRAMEWORK_NAME>",
+    "DCOS_SERVICE_PORT_INDEX": "0"
+   },
   "ports": [0],
   "env": {
-    "LOG_LEVEL": "info"
+    "LOG_LEVEL": "info",
+    "TASK_DEF_NUM": "1",
+    "TASK0_ENV": "{}",
+    "TASK0_IMAGE": "alpine",
+    "TASK0_NUM_INSTANCES": "3",
+    "TASK0_URI": "<OPTIONAL_URI>",
+    "FRAMEWORK_NAME": "<FRAMEWORK_NAME>",
+    "TASK0_NAME": "alpine",
+    "TASK0_CPUS": "0.5",
+    "TASK0_MEM": "512",
+    "TASK0_HEALTHCHECK": "<HEALTHCHECK_URL>",
+    "TASK0_HEALTHCHECK_PORT": "1",
+    "TASK0_FIXED_PORTS": "<PORTS>",
+    "TASK0_PORT_NUM": "1",
+    "TASK0_CONTAINER_PARAMS": "[]",
+    "TASK0_ARGS": "[\"sleep\", \"100000\"]",
+    "TASK0_NOCOLOCATION": "false",
+    "TASK0_CONTAINER_PRIVILEGED": "false",
+    "FRAMEWORK_NAME_BACKGROUND": "#ecfdf0"
   }
 }
 ```
 
 ### Customization
 
-You should replace `YOUR_FRAMEWORK_NAME` with a meaningful name for the Marathon app. Furthermore, it is necessary to insert the correct Docker image name instead of `REGISTRY_URL/USERNAME/IMAGENAME:TAG`.
+You should replace `FRAMEWORK_NAME` with a meaningful name for the Marathon app. Furthermore, it is necessary to insert the correct Docker image name instead of `REGISTRY_URL/USERNAME/IMAGENAME:TAG`.
 
-Furthermore, you can customize the `cpus` and `mem` settings, although they should suffice as already configured. Keep in mind that the `mesos-framework` module doesn't yet support scheduler failover (HA), so running more than one instance has no effect. This will be changed in future releases.
+Furthermore, you can customize the `cpus` and `mem` settings, although they should suffice as already configured. Keep in mind that the `mesos-framework` module doesn't yet support scheduler failover (HA), so running more than one instance has no benefit, it will clutter the logs with failovers and reconnections. This will be changed in future releases.  
+
+You can customize the tasks environment using the TASK# environment variable (gets a JSON object as string), container params, ports, args, and all other environment variables.  
+The required ones are: TASK_DEF_NUM, FRAMEWORK_NAME, TASK#_NAME, TASK#_NUM_INSTANCES, TASK#_CPUS, TASK#_MEM, TASK#_IMAGE.
+
+If you want to support authentication, you need to add an environment variable named CREDENTIALS_URL with a URL to a shell file that sets the authentication related variables ("GITLAB_APP_ID", "GITLAB_APP_SECRET", "GITLAB_CALLBACK_URL" - for GitLab and/or "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_CALLBACK_URL" - for Google, required: AUTH_COOKIE_ENCRYPTION_KEY, optionally: GITLAB_URL, GOOGLE_FILTER, GOOGLE_SCOPE), the callback URLs are /auth/gitlab/callback and /auth/google/callback, naturally you should add the host and port of your mesos agent/load balancer.
 
 ### Launching
 

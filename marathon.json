@@ -23,9 +23,31 @@
       "portIndex": 0
     }
   ],
+  "labels": {
+    "DCOS_SERVICE_SCHEME": "http",
+    "DCOS_SERVICE_NAME": "<FRAMEWORK_NAME>",
+    "DCOS_PACKAGE_FRAMEWORK_NAME": "<FRAMEWORK_NAME>",
+    "DCOS_SERVICE_PORT_INDEX": "0"
+   },
   "ports": [0],
   "env": {
-    "ZK_URL": "172.17.10.101:2181,172.17.10.102:2181,172.17.10.103:2181",
-    "LOG_LEVEL": "info"
+    "LOG_LEVEL": "info",
+    "TASK_DEF_NUM": "1",
+    "TASK0_ENV": "{}",
+    "TASK0_IMAGE": "alpine",
+    "TASK0_NUM_INSTANCES": "3",
+    "TASK0_URI": "<OPTIONAL_URI>",
+    "FRAMEWORK_NAME": "<FRAMEWORK_NAME>",
+    "TASK0_NAME": "alpine",
+    "TASK0_CPUS": "0.5",
+    "TASK0_MEM": "512",
+    "TASK0_HEALTHCHECK": "<HEALTHCHECK_URL>",
+    "TASK0_HEALTHCHECK_PORT": "1",
+    "TASK0_FIXED_PORTS": "<PORTS>",
+    "TASK0_PORT_NUM": "1",
+    "TASK0_CONTAINER_PARAMS": "[]",
+    "TASK0_ARGS": "[\"sleep\", \"100000\"]",
+    "TASK0_NOCOLOCATION": "true",
+    "FRAMEWORK_NAME_BACKGROUND": "#ecfdf0"
   }
 }
