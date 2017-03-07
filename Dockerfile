@@ -2,6 +2,12 @@ FROM mhart/alpine-node:6.3.0
 
 MAINTAINER tobilg@gmail.com
 
+# Setup of the prerequisites
+RUN apk add --no-cache git && \
+    apk add --no-cache ca-certificates openssl && \
+    mkdir -p /mnt/mesos/sandbox/logs && \
+    npm set progress=false
+
 # Set application name
 ENV APP_NAME mesos-framework-boilerplate
 
@@ -18,13 +24,8 @@ ADD . ${APP_DIR}
 WORKDIR ${APP_DIR}
 
 # Setup of the application
-RUN apk add --no-cache git && \
-    rm -rf ${APP_DIR}/node_modules && \
-    rm -rf ${APP_DIR}/public/bower_components && \
-    mkdir -p ${APP_DIR}/logs && \
-    npm set progress=false && \
-    npm install --silent && \
+RUN npm install --silent && \
     npm install bower -g && \
     bower install --allow-root
 
-CMD ["npm", "start"]
+CMD ["sh", "./get_creds.sh"]
